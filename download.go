@@ -41,25 +41,33 @@ func DownloadIGUser(user igstory.IGUser, isHighlight bool,username string) {
 	for _, story := range user.Stories {
 		// BuildOutputFilePath also create dir if not exist
 		if user.Username == username {
-			p := BuildOutputFilePath(user.Username, story.Url, story.Timestamp)
-			if isHighlight {
-				p = AddTitleInPath(p, user.Title)
-			}
-			// check if file exist
-			if _, err := os.Stat(p); os.IsNotExist(err) {
-				// file not exists
-				PrintDownloadInfo(user.Username, story.Url, p, story.Timestamp)
-				err = Wget(story.Url, p)
-				if err != nil {
-					fmt.Println(err)
-				}
-			}
-		}else {
+			createPathAndDownloadUserStores(&user,isHighlight,&story)
+		} else if username == ""{
+			fmt.Println("Scraping all the users")
+			createPathAndDownloadUserStores(&user,isHighlight,&story)
+		} else {
 			fmt.Println("Skiping this user...not the one we want!")
 		}
 
 	}
 }
+
+func createPathAndDownloadUserStores(user *igstory.IGUser,isHighlight bool, story *igstory.IGStory) {
+	p := BuildOutputFilePath(user.Username, story.Url, story.Timestamp)
+	if isHighlight {
+		p = AddTitleInPath(p, user.Title)
+	}
+	// check if file exist
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		// file not exists
+		PrintDownloadInfo(user.Username, story.Url, p, story.Timestamp)
+		err = Wget(story.Url, p)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+}
+
 
 // Download unexpired stories of users with unread stories.
 func DownloadUnread(username string) {
