@@ -4,7 +4,6 @@ package igstorydl
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/siongui/goigfollow"
 	"github.com/siongui/goigstorylink"
 	"os"
 	"os/exec"
@@ -38,27 +37,32 @@ func PrintDownloadInfo(username, url, filepath string, timestamp int64) {
 	fmt.Println(" ...")
 }
 
-func DownloadIGUser(user igstory.IGUser, isHighlight bool) {
+func DownloadIGUser(user igstory.IGUser, isHighlight bool,username string) {
 	for _, story := range user.Stories {
 		// BuildOutputFilePath also create dir if not exist
-		p := BuildOutputFilePath(user.Username, story.Url, story.Timestamp)
-		if isHighlight {
-			p = AddTitleInPath(p, user.Title)
-		}
-		// check if file exist
-		if _, err := os.Stat(p); os.IsNotExist(err) {
-			// file not exists
-			PrintDownloadInfo(user.Username, story.Url, p, story.Timestamp)
-			err = Wget(story.Url, p)
-			if err != nil {
-				fmt.Println(err)
+		if user.Username == username {
+			p := BuildOutputFilePath(user.Username, story.Url, story.Timestamp)
+			if isHighlight {
+				p = AddTitleInPath(p, user.Title)
 			}
+			// check if file exist
+			if _, err := os.Stat(p); os.IsNotExist(err) {
+				// file not exists
+				PrintDownloadInfo(user.Username, story.Url, p, story.Timestamp)
+				err = Wget(story.Url, p)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}else {
+			fmt.Println("Skiping this user...not the one we want!")
 		}
+
 	}
 }
 
 // Download unexpired stories of users with unread stories.
-func DownloadUnread() {
+func DownloadUnread(username string) {
 	users, err := igstory.GetUnreadStories()
 	if err != nil {
 		// return error? or just print?
@@ -67,12 +71,12 @@ func DownloadUnread() {
 	}
 
 	for _, user := range users {
-		DownloadIGUser(user, false)
+		DownloadIGUser(user, false,username)
 	}
 }
 
 // Download all unexpired stories
-func DownloadAll() {
+func DownloadAll(username string) {
 	users, err := igstory.GetAllStories()
 	if err != nil {
 		// return error? or just print?
@@ -81,35 +85,14 @@ func DownloadAll() {
 	}
 
 	for _, user := range users {
-		DownloadIGUser(user, false)
+		DownloadIGUser(user, false,username)
 	}
 }
 
-// Download highlight stories of following users.
-func DownloadHighlight(ds_user_id, sessionid, csrftoken string) {
-	rf, err := igfollow.GetFollowing(ds_user_id, ds_user_id, sessionid, csrftoken)
-	if err != nil {
-		// return error? or just print?
-		fmt.Println(err)
-		return
-	}
-
-	for _, user := range rf.Users {
-		husers, err := igstory.GetUserHighlightStories(user.Pk)
-		if err != nil {
-			// return error? or just print?
-			fmt.Println(err)
-			return
-		}
-		for _, huser := range husers {
-			DownloadIGUser(huser, true)
-		}
-	}
-}
 
 // Given *ds_user_id*, *sessionid*, and *csrftoken* cookies, monitor and
 // download stories automatically.
-func MonitorAndDownload(userid, sessionid, csrftoken string) {
+func MonitorAndDownload(userid, sessionid, csrftoken string,username string) {
 	igstory.SetUserId(userid)
 	igstory.SetSessionId(sessionid)
 	igstory.SetCsrfToken(csrftoken)
@@ -120,10 +103,10 @@ func MonitorAndDownload(userid, sessionid, csrftoken string) {
 	count := 0
 	for {
 		if count == 0 {
-			DownloadAll()
+			DownloadAll(username)
 			cc.Println("Download all stories finished")
 		} else {
-			DownloadUnread()
+			DownloadUnread(username)
 			cc.Println("Download unread stories finished")
 		}
 		count++
