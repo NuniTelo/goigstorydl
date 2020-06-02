@@ -62,7 +62,7 @@ Example
   )
 
   func main() {
-  	igstorydl.MonitorAndDownload("your user id", "your session id", "your csrftoken", "username_you_want_to_scrape")
+  	igstorydl.MonitorAndDownload("your user id", "your session id", "your csrftoken", "username_you_want_to_scrape") //leave the last argument blank if you want to download stories of every user you follow
   }
 
 
