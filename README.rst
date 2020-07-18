@@ -58,7 +58,7 @@ Example
   package main
 
   import (
-  	"github.com/siongui/goigstorydl"
+  	"github.com/NuniTelo/goigstorydl"
   )
 
   func main() {
